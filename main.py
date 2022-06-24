@@ -7,6 +7,9 @@ logging.getLogger('faiss.loader').setLevel(logging.WARNING)
 logging.getLogger('fastreid.utils.checkpoint').setLevel(logging.WARNING)
 logging.getLogger('fastreid.engine.defaults').setLevel(logging.WARNING)
 logging.getLogger('root.tracker').setLevel(logging.WARNING)
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
+logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
+logging.getLogger('matplotlib.pyplot').setLevel(logging.WARNING)
 logging.basicConfig(format='[%(levelname)s] [%(name)s] %(message)s',
                     level=logging.INFO)
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -18,7 +21,7 @@ from LPR import vehicle_LPR, plate_voting, final_voting
 from db import save_database, vehicle_appear_count, get_db_warning
 from utils import cv2PutChineseText
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('main')
 
 
 def parse_args():
@@ -33,6 +36,10 @@ def parse_args():
                         help='cv2.imshow fps')
     parser.add_argument('--visualize', action='store_true',
                         help='visualize output frame')
+    parser.add_argument('--show', action='store_true',
+                        help='show video using cv2.imshow')
+    parser.add_argument('--save', action='store_true',
+                        help='save result frames')
     args = parser.parse_args()
     logger.debug(f'args: {args}')
     return args
@@ -41,11 +48,13 @@ def parse_args():
 def main():
     args = parse_args()
     generator = get_img_generator(args.channel, args.video, args.frame_dir)
-    for img in generator:
+    for idx, img in enumerate(generator):
         frame, warning_plates = black_cab_warning(img, visualize=args.visualize)
-        if args.visualize:
+        if args.show:
             cv2.imshow('Test', frame)
             cv2.waitKey(1)
+        if args.save:
+            cv2.imwrite('outputs/%06d.jpg' % idx, frame)
     voted_plates = final_voting(tracker_info)
     save_database(voted_plates)
     # TODO: 黑/白名单

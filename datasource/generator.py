@@ -21,6 +21,7 @@ def channel_generator(channel):
             continue
         img_files = img_files[:run_interval]
         for filename in img_files:
+            logger.debug(f'Channel image: {filename}')
             img_path = os.path.join(frame_dir, filename)
             img = cv2.imread(img_path)
             yield img
