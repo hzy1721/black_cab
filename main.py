@@ -2,6 +2,7 @@ import argparse
 import logging
 import cv2
 import warnings
+import torch
 
 logging.getLogger('faiss.loader').setLevel(logging.WARNING)
 logging.getLogger('fastreid.utils.checkpoint').setLevel(logging.WARNING)
@@ -14,9 +15,9 @@ logging.basicConfig(format='[%(levelname)s] [%(name)s] %(message)s',
                     level=logging.INFO)
 warnings.filterwarnings("ignore", category=UserWarning)
 
-from datasource import get_img_generator
-from detection import detect_private_vehicle
-from tracking import track_vehicle, update_tracker_info, get_lost_track
+from datasource import get_img_generator, create_output_dir
+from detection import init_det_model, detect_private_vehicle
+from tracking import init_track_model, track_vehicle, update_tracker_info, get_lost_track
 from LPR import vehicle_LPR, plate_voting, final_voting
 from db import save_database, vehicle_appear_count, get_db_warning
 from utils import cv2PutChineseText
@@ -32,10 +33,10 @@ def parse_args():
                         help='video path')
     parser.add_argument('--frame_dir', type=str,
                         help='frames dir path')
+    parser.add_argument('--device', type=str, default='cuda:0' if torch.cuda.is_available() else 'cpu',
+                        help='cuda device or cpu')
     parser.add_argument('--fps', type=int, default=25,
                         help='cv2.imshow fps')
-    parser.add_argument('--visualize', action='store_true',
-                        help='visualize output frame')
     parser.add_argument('--show', action='store_true',
                         help='show video using cv2.imshow')
     parser.add_argument('--save', action='store_true',
@@ -47,9 +48,13 @@ def parse_args():
 
 def main():
     args = parse_args()
+    init_det_model(args.device)
+    init_track_model(args.device)
     generator = get_img_generator(args.channel, args.video, args.frame_dir)
+    if args.save:
+        create_output_dir(args.channel, args.video, args.frame_dir)
     for idx, img in enumerate(generator):
-        frame, warning_plates = black_cab_warning(img, visualize=args.visualize)
+        frame, warning_plates = black_cab_warning(img, visualize=args.show or args.save)
         if args.show:
             cv2.imshow('Test', frame)
             cv2.waitKey(1)

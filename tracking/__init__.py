@@ -21,10 +21,13 @@ cfg.merge_from_file(f'{ROOT}/configs/fastreid.yaml')
 cfg.USE_FASTREID = True
 cfg.FASTREID.CFG = fastreid_config_path
 cfg.FASTREID.CHECKPOINT = fastreid_checkpoint_path
-deepsort = build_tracker(cfg, use_cuda=torch.cuda.is_available())
+deepsort = None
 
-track_device = 'cuda' if torch.cuda.is_available() else 'cpu'
-logger.info(f'车辆跟踪模型加载完成 ({track_device})')
+
+def init_track_model(device):
+    global deepsort
+    deepsort = build_tracker(cfg, use_cuda=torch.cuda.is_available(), device=device)
+    logger.info(f'车辆跟踪模型加载完成 ({device})')
 
 
 def track_vehicle(img, dets):

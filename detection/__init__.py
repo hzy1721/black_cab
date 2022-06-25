@@ -13,9 +13,13 @@ logger = logging.getLogger(__name__)
 
 config_path = f'{ROOT}/configs/yolo/yolov3_d53_mstrain-608_273e_coco.py'
 checkpoint_path = f'{ROOT}/checkpoints/yolov3_d53_mstrain-608_273e_coco/latest.pth'
-det_device = f'cuda:{torch.cuda.device_count() - 1}' if torch.cuda.is_available() else 'cpu'
-det_model = init_detector(config_path, checkpoint_path, device=det_device)
-logger.info(f'私家车检测模型加载完成 ({det_device})')
+det_model = None
+
+
+def init_det_model(device):
+    global det_model
+    det_model = init_detector(config_path, checkpoint_path, device=device)
+    logger.info(f'私家车检测模型加载完成 ({device})')
 
 
 def detect_private_vehicle(img):

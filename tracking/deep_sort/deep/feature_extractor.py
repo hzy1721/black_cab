@@ -50,11 +50,12 @@ class Extractor(object):
 
 
 class FastReIDExtractor(object):
-    def __init__(self, model_config, model_path, use_cuda=True):
+    def __init__(self, model_config, model_path, use_cuda=True, device='cuda:0'):
         cfg = get_cfg()
         cfg.merge_from_file(model_config)
         cfg.MODEL.BACKBONE.PRETRAIN = False
-        self.device = "cuda" if torch.cuda.is_available() and use_cuda else "cpu"
+        # self.device = "cuda" if torch.cuda.is_available() and use_cuda else "cpu"
+        self.device = device
         cfg.MODEL.DEVICE = self.device
         self.net = DefaultTrainer.build_model(cfg)
 

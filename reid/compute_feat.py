@@ -27,8 +27,9 @@ def setup_cfg():
 
 
 cfg = setup_cfg()
-predictor = DefaultPredictor(cfg)
-logger.info(f'车辆重识别模型加载完成 ({reid_device})')
+# predictor = DefaultPredictor(cfg)
+predictor = None
+# logger.info(f'车辆重识别模型加载完成 ({reid_device})')
 
 
 def postprocess(features):
