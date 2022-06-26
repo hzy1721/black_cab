@@ -5,3 +5,4 @@ __pycache__
 data
 detection/checkpoints
 reid/checkpoints
+outputs

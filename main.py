@@ -3,26 +3,8 @@ import logging
 import cv2
 import warnings
 import torch
-
-logging.getLogger('faiss.loader').setLevel(logging.WARNING)
-logging.getLogger('fastreid.utils.checkpoint').setLevel(logging.WARNING)
-logging.getLogger('fastreid.engine.defaults').setLevel(logging.WARNING)
-logging.getLogger('root.tracker').setLevel(logging.WARNING)
-logging.getLogger('matplotlib').setLevel(logging.WARNING)
-logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
-logging.getLogger('matplotlib.pyplot').setLevel(logging.WARNING)
-logging.basicConfig(format='[%(levelname)s] [%(name)s] %(message)s',
-                    level=logging.INFO)
-warnings.filterwarnings("ignore", category=UserWarning)
-
-from datasource import get_img_generator, create_output_dir
-from detection import init_det_model, detect_private_vehicle
-from tracking import init_track_model, track_vehicle, update_tracker_info, get_lost_track
-from LPR import vehicle_LPR, plate_voting, final_voting
-from db import save_database, vehicle_appear_count, get_db_warning
-from utils import cv2PutChineseText
-
-logger = logging.getLogger('main')
+import os
+from datasource import create_output_dir
 
 
 def parse_args():
@@ -42,24 +24,45 @@ def parse_args():
     parser.add_argument('--save', action='store_true',
                         help='save result frames')
     args = parser.parse_args()
-    logger.debug(f'args: {args}')
+    print(f'args: {args}')
     return args
 
 
+args = parse_args()
+out_dir = create_output_dir(args.channel, args.video, args.frame_dir)
+logging.getLogger('faiss.loader').setLevel(logging.WARNING)
+logging.getLogger('fastreid.utils.checkpoint').setLevel(logging.WARNING)
+logging.getLogger('fastreid.engine.defaults').setLevel(logging.WARNING)
+logging.getLogger('root.tracker').setLevel(logging.WARNING)
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
+logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
+logging.getLogger('matplotlib.pyplot').setLevel(logging.WARNING)
+logging.basicConfig(format='[%(levelname)s] [%(name)s] %(message)s',
+                    level=logging.INFO,
+                    filename=os.path.join(out_dir, 'log.txt'))
+warnings.filterwarnings("ignore", category=UserWarning)
+
+from datasource import get_img_generator
+from detection import init_det_model, detect_private_vehicle
+from tracking import init_track_model, track_vehicle, update_tracker_info, get_lost_track
+from LPR import vehicle_LPR, plate_voting, final_voting
+from db import save_database, vehicle_appear_count, get_db_warning
+from utils import cv2PutChineseText
+
+logger = logging.getLogger('main')
+
+
 def main():
-    args = parse_args()
     init_det_model(args.device)
     init_track_model(args.device)
     generator = get_img_generator(args.channel, args.video, args.frame_dir)
-    if args.save:
-        create_output_dir(args.channel, args.video, args.frame_dir)
     for idx, img in enumerate(generator):
         frame, warning_plates = black_cab_warning(img, visualize=args.show or args.save)
         if args.show:
             cv2.imshow('Test', frame)
             cv2.waitKey(1)
         if args.save:
-            cv2.imwrite('outputs/%06d.jpg' % idx, frame)
+            cv2.imwrite(os.path.join(out_dir, '%07d.jpg' % idx), frame)
     voted_plates = final_voting(tracker_info)
     save_database(voted_plates)
     # TODO: 黑/白名单

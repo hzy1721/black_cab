@@ -33,3 +33,5 @@ def create_output_dir(channel, video, frame_dir):
         raise 'Datasource not provided'
     logger.info(f'输出视频帧的存储位置: {out_dir}')
     os.makedirs(out_dir, exist_ok=True)
+    return out_dir
+
