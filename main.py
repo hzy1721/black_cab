@@ -5,6 +5,7 @@ import warnings
 import torch
 import os
 from datasource import create_output_dir
+import time
 
 
 def parse_args():
@@ -37,9 +38,13 @@ logging.getLogger('root.tracker').setLevel(logging.WARNING)
 logging.getLogger('matplotlib').setLevel(logging.WARNING)
 logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
 logging.getLogger('matplotlib.pyplot').setLevel(logging.WARNING)
+# prod
 logging.basicConfig(format='[%(levelname)s] [%(name)s] %(message)s',
                     level=logging.INFO,
                     filename=os.path.join(out_dir, 'log.txt'))
+# dev
+# logging.basicConfig(format='[%(levelname)s] [%(name)s] %(message)s',
+#                     level=logging.DEBUG)
 warnings.filterwarnings("ignore", category=UserWarning)
 
 from datasource import get_img_generator
@@ -57,12 +62,15 @@ def main():
     init_track_model(args.device)
     generator = get_img_generator(args.channel, args.video, args.frame_dir)
     for idx, img in enumerate(generator):
+        t1 = time.perf_counter()
         frame, warning_plates = black_cab_warning(img, visualize=args.show or args.save)
         if args.show:
             cv2.imshow('Test', frame)
             cv2.waitKey(1)
         if args.save:
             cv2.imwrite(os.path.join(out_dir, '%07d.jpg' % idx), frame)
+        t2 = time.perf_counter()
+        logger.debug(f'Time cost per frame: {t2 - t1} s ({ 1 / (t2 - t1)} FPS)')
     voted_plates = final_voting(tracker_info)
     save_database(voted_plates)
     # TODO: 黑/白名单
