@@ -37,8 +37,6 @@ _darcs
 .DS_Store
 
 .github
-data
-datasets
 demo
 docker
 docs

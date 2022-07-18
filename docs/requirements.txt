@@ -47,3 +47,4 @@ tabulate
 tensorboard
 gdown
 faiss-gpu
+cython
